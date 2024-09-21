@@ -339,6 +339,52 @@ class Llama:
             for t in generation_tokens
         ]
 
+    @torch.inference_mode()
+    def extract_attention_metrics(
+        self,
+        prompts: List[str],
+        max_gen_len: Optional[int] = None,
+        echo: bool = False,
+    ) -> List[torch.Tensor]:
+        
+        if max_gen_len is None:
+            max_gen_len = self.model.params.max_seq_len - 1
+
+        prompt_tokens = [self.tokenizer.encode(x, bos=True, eos=False) for x in prompts]
+
+        params = self.model.params
+        bsz = len(prompt_tokens)
+        assert bsz <= params.max_batch_size, (bsz, params.max_batch_size)
+
+        min_prompt_len = min(len(t) for t in prompt_tokens)
+        max_prompt_len = max(len(t) for t in prompt_tokens)
+        assert max_prompt_len <= params.max_seq_len
+        total_len = min(params.max_seq_len, max_gen_len + max_prompt_len)
+
+        pad_id = self.tokenizer.pad_id
+        tokens = torch.full((bsz, total_len), pad_id, dtype=torch.long, device="cuda")
+        for k, t in enumerate(prompt_tokens):
+            tokens[k, : len(t)] = torch.tensor(t, dtype=torch.long, device="cuda")
+
+        prev_pos = 0
+        eos_reached = torch.tensor([False] * bsz, device="cuda")
+        input_text_mask = tokens != pad_id
+
+        if min_prompt_len == total_len:
+            raise ValueError("Prompt is too long for attention extraction or 'max_gen_len' is too short.")
+        
+        stop_tokens = torch.tensor(list(self.tokenizer.stop_tokens))
+
+        # Input prompt to the model
+        prev_pos = max_prompt_len
+        logits = self.model.forward(tokens[:, :max_prompt_len], 0)
+
+        # Extract attention metrics
+        attention_scores = self.model.attention_scores # (bsz, num_heads, tgt_len, src_len) (bs, n_local_heads, seqlen, cache_len + seqlen)
+
+        # Extract attention scores for the last token
+
+
 
 def sample_top_p(probs, p):
     """

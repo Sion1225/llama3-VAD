@@ -143,6 +143,9 @@ class Attention(nn.Module):
             )
         ).cuda()
 
+        # save attention scores for output
+        self.attention_scores = None
+
     def forward(
         self,
         x: torch.Tensor,
@@ -182,6 +185,10 @@ class Attention(nn.Module):
             1, 2
         )  # (bs, n_local_heads, cache_len + seqlen, head_dim)
         scores = torch.matmul(xq, keys.transpose(2, 3)) / math.sqrt(self.head_dim)
+        
+        # save attention scores for output
+        self.attetion_scores = scores # (bs, n_local_heads, seqlen, cache_len + seqlen)
+
         if mask is not None:
             scores = scores + mask  # (bs, n_local_heads, seqlen, cache_len + seqlen)
         scores = F.softmax(scores.float(), dim=-1).type_as(xq)
