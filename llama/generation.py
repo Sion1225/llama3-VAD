@@ -344,13 +344,12 @@ class Llama:
         self,
         prompts: List[str],
         max_gen_len: Optional[int] = None,
-        echo: bool = False,
     ) -> List[torch.Tensor]:
         
         if max_gen_len is None:
             max_gen_len = self.model.params.max_seq_len - 1
 
-        prompt_tokens = [self.tokenizer.encode(x, bos=True, eos=False) for x in prompts]
+        prompt_tokens = [self.tokenizer.encode(x, bos=True, eos=True) for x in prompts] # <s> + prompt + </s> # change eos to 'True' from 'False' 
 
         params = self.model.params
         bsz = len(prompt_tokens)
@@ -367,7 +366,11 @@ class Llama:
             tokens[k, : len(t)] = torch.tensor(t, dtype=torch.long, device="cuda")
 
         prev_pos = 0
-        eos_reached = torch.tensor([False] * bsz, device="cuda")
+        #eos_reached = torch.tensor([False] * bsz, device="cuda")
+
+        # find the position of the first <eos> token
+        eos_positions = (prompt_tokens == self.tokenizer.eos_id).nonzero(as_tuple=False) # [bsz][batch number, <eos> position]
+
         input_text_mask = tokens != pad_id
 
         if min_prompt_len == total_len:
@@ -383,6 +386,9 @@ class Llama:
         attention_scores = self.model.attention_scores # (bsz, num_heads, tgt_len, src_len) (bs, n_local_heads, seqlen, cache_len + seqlen)
 
         # Extract attention scores for the last token
+        final_attention_scores = attention_scores[eos_positions[:, 0], :, eos_positions[:, 1], :]
+
+        return final_attention_scores
 
 
 
