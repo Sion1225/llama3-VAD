@@ -26,10 +26,10 @@ def main(
 
     prompts: List[str] = emobank['text'].tolist()
 
-    context_vectors = generator.extract_context_vector(prompts)
+    final_attention_scores = generator.extract_context_vector(prompts)
 
-    with open('context_vectors.txt', 'w') as f:
-        for promt, context_vector in zip(prompts, context_vectors):
+    with open('final_attention_scores.txt', 'w') as f:
+        for promt, context_vector in zip(prompts, final_attention_scores):
             f.write(f'{promt}\n{context_vector}\n\n')
 
 if __name__ == "__main__":
