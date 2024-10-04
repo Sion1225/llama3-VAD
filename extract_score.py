@@ -7,7 +7,7 @@ from llama import Llama
 
 
 def main(
-    ckpt_path: str,
+    ckpt_dir: str,
     tokenizer_path: str,
     max_seq_len: int = 128,
     max_gen_len: int = 64,
@@ -15,7 +15,7 @@ def main(
 ):
     
     generator = Llama.build(
-        ckpt_path=ckpt_path,
+        ckpt_dir=ckpt_dir,
         tokenizer_path=tokenizer_path,
         max_seq_len=max_seq_len,
         max_batch_size=max_batch_size,
