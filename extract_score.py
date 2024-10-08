@@ -1,4 +1,5 @@
 from typing import List
+import os
 
 import fire
 import pandas as pd
@@ -14,6 +15,8 @@ def main(
     max_batch_size: int = 4,
 ):
     
+    print(f"Working directory: {os.getcwd()}")
+    
     generator = Llama.build(
         ckpt_dir=ckpt_dir,
         tokenizer_path=tokenizer_path,
@@ -26,7 +29,7 @@ def main(
 
     prompts: List[str] = emobank['text'].tolist()
 
-    final_attention_scores = generator.extract_context_vector(prompts)
+    final_attention_scores = generator.extract_attention_metrics(prompts)
 
     with open('final_attention_scores.txt', 'w') as f:
         for promt, context_vector in zip(prompts, final_attention_scores):
