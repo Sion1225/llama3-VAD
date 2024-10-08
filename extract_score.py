@@ -28,6 +28,7 @@ def main(
     emobank = pd.read_csv(EMOBANK_PATH, na_values=[], keep_default_na=False)
 
     prompts: List[str] = emobank['text'].tolist()
+    print(prompts[:3])
 
     final_attention_scores = generator.extract_attention_metrics(prompts)
 
