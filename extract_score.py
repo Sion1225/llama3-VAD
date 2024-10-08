@@ -24,7 +24,7 @@ def main(
         max_batch_size=max_batch_size,
     )
 
-    EMOBANK_PATH = "/experiment_data/emobank.csv"
+    EMOBANK_PATH = "experiment_data/emobank.csv"
     emobank = pd.read_csv(EMOBANK_PATH, na_values=[], keep_default_na=False)
 
     prompts: List[str] = emobank['text'].tolist()
