@@ -189,7 +189,7 @@ class Attention(nn.Module):
         scores = torch.matmul(xq, keys.transpose(2, 3)) / math.sqrt(self.head_dim)
         
         # save attention scores for output
-        self.attetion_scores = scores # (bs, n_local_heads, seqlen, cache_len + seqlen)
+        self.attention_scores = scores # (bs, n_local_heads, seqlen, cache_len + seqlen)
 
         if mask is not None:
             scores = scores + mask  # (bs, n_local_heads, seqlen, cache_len + seqlen)
