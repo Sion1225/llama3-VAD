@@ -390,7 +390,10 @@ class Llama:
             #eos_reached = torch.tensor([False] * bsz, device="cuda")
 
             # find the position of the first <eos> token
-            eos_positions = (prompt_tokens == self.tokenizer.eos_id).nonzero(as_tuple=False) # [bsz][batch number, <eos> position]\
+            # Convert prompt_tokens to a tensor
+            prompt_tensor = torch.tensor(prompt_tokens, dtype=torch.long, device="cuda")
+            # Find the position of the first <eos> token
+            eos_positions = (prompt_tensor == self.tokenizer.eos_id).nonzero(as_tuple=False) # [bsz][batch number, <eos> position]\
         except:
             print("Error: 'prev_pos' or 'eos_positions' is not provided.")
             raise
