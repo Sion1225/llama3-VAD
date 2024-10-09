@@ -412,8 +412,12 @@ class Llama:
         except:
             print("Error: 'attention_scores' is not provided.")
 
-        # Extract attention scores for the last token
-        final_attention_scores = attention_scores[eos_positions[:, 0], :, eos_positions[:, 1], :]
+        try:
+            # Extract attention scores for the last token
+            final_attention_scores = attention_scores[eos_positions[:, 0], :, eos_positions[:, 1], :]
+        except:
+            print("Error: 'final_attention_scores' is not provided.")
+            print(eos_positions)
 
         return final_attention_scores
 
