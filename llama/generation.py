@@ -391,7 +391,7 @@ class Llama:
 
             # find the position of the first <eos> token
             # Convert prompt_tokens to a tensor
-            prompt_tensor = torch.tensor(prompt_tokens, dtype=torch.long, device="cuda")
+            prompt_tensor = torch.tensor(tokens, dtype=torch.long, device="cuda")
             # Find the position of the first <eos> token
             eos_positions = (prompt_tensor == self.tokenizer.eos_id).nonzero(as_tuple=False) # [bsz][batch number, <eos> position]\
         except:
