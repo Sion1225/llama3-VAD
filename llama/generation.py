@@ -351,11 +351,13 @@ class Llama:
                 max_gen_len = self.model.params.max_seq_len - 1
         except:
             print("Error: 'max_gen_len' is not provided.")
+            raise
 
         try:
             prompt_tokens = [self.tokenizer.encode(x, bos=True, eos=True) for x in prompts] # <s> + prompt + </s> # change eos to 'True' from 'False' 
         except:
             print("Error: 'prompts' are not provided.")
+            raise
 
         try:
             params = self.model.params
@@ -363,6 +365,7 @@ class Llama:
             assert bsz <= params.max_batch_size, (bsz, params.max_batch_size)
         except:
             print("Error: 'bsz' is not provided.")
+            raise
 
         try:
             min_prompt_len = min(len(t) for t in prompt_tokens)
@@ -371,6 +374,7 @@ class Llama:
             total_len = min(params.max_seq_len, max_gen_len + max_prompt_len)
         except:
             print("Error: 'min_prompt_len' or 'max_prompt_len' or 'total_len' is not provided.")
+            raise
 
         try:
             pad_id = self.tokenizer.pad_id
@@ -379,6 +383,7 @@ class Llama:
                 tokens[k, : len(t)] = torch.tensor(t, dtype=torch.long, device="cuda")
         except:
             print("Error: 'pad_id' or 'tokens' is not provided.")
+            raise
 
         try:
             prev_pos = 0
@@ -388,6 +393,7 @@ class Llama:
             eos_positions = (prompt_tokens == self.tokenizer.eos_id).nonzero(as_tuple=False) # [bsz][batch number, <eos> position]\
         except:
             print("Error: 'prev_pos' or 'eos_positions' is not provided.")
+            raise
 
         try:
             input_text_mask = tokens != pad_id
@@ -398,6 +404,7 @@ class Llama:
             stop_tokens = torch.tensor(list(self.tokenizer.stop_tokens))
         except:
             print("Error: 'input_text_mask' or 'stop_tokens' is not provided.")
+            raise
 
         try:
             # Input prompt to the model
@@ -405,12 +412,14 @@ class Llama:
             logits = self.model.forward(tokens[:, :max_prompt_len], 0)
         except:
             print("Error: 'prev_pos' or 'logits' is not provided.")
+            raise
 
         try:
             # Extract attention metrics
             attention_scores = self.model.attention_scores # (bsz, num_heads, tgt_len, src_len) (bs, n_local_heads, seqlen, cache_len + seqlen)
         except:
             print("Error: 'attention_scores' is not provided.")
+            raise
 
         try:
             # Extract attention scores for the last token
@@ -418,6 +427,7 @@ class Llama:
         except:
             print("Error: 'final_attention_scores' is not provided.")
             print(eos_positions)
+            raise
 
         return final_attention_scores
 
