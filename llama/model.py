@@ -277,7 +277,7 @@ class Transformer(nn.Module):
         for layer_id in range(params.n_layers):
             self.layers.append(TransformerBlock(layer_id, params))
 
-        self.attention_scores = TransformerBlock.attention_scores
+        self.attention_scores = self.layers[params.n_layers - 1].attention.attention_scores
 
         self.norm = RMSNorm(params.dim, eps=params.norm_eps)
         self.output = ColumnParallelLinear(
