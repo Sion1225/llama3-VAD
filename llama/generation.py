@@ -117,6 +117,8 @@ class Llama:
         self.tokenizer = tokenizer
         self.formatter = ChatFormat(tokenizer)
 
+        self.prompt_tokens = None
+
     @torch.inference_mode()
     def generate(
         self,
@@ -349,20 +351,20 @@ class Llama:
         if max_gen_len is None:
             max_gen_len = self.model.params.max_seq_len - 1
 
-        prompt_tokens = [self.tokenizer.encode(x, bos=True, eos=True) for x in prompts] # <s> + prompt + </s> # change eos to 'True' from 'False' 
+        self.prompt_tokens = [self.tokenizer.encode(x, bos=True, eos=True) for x in prompts] # <s> + prompt + </s> # change eos to 'True' from 'False' 
 
         params = self.model.params
-        bsz = len(prompt_tokens)
+        bsz = len(self.prompt_tokens)
         assert bsz <= params.max_batch_size, (bsz, params.max_batch_size)
 
-        min_prompt_len = min(len(t) for t in prompt_tokens)
-        max_prompt_len = max(len(t) for t in prompt_tokens)
+        min_prompt_len = min(len(t) for t in self.prompt_tokens)
+        max_prompt_len = max(len(t) for t in self.prompt_tokens)
         assert max_prompt_len <= params.max_seq_len
         total_len = min(params.max_seq_len, max_gen_len + max_prompt_len)
 
         pad_id = self.tokenizer.pad_id
         tokens = torch.full((bsz, total_len), pad_id, dtype=torch.long, device="cuda")
-        for k, t in enumerate(prompt_tokens):
+        for k, t in enumerate(self.prompt_tokens):
             tokens[k, : len(t)] = torch.tensor(t, dtype=torch.long, device="cuda")
 
         prev_pos = 0

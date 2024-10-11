@@ -31,14 +31,22 @@ def main(
     prompts_len = len(prompts)
 
     final_attention_scores = []
+    prompt_tokens = []
     for i in range(0, prompts_len, max_batch_size):
         batch_prompts = prompts[i:i+max_batch_size]
+
+        # Reset cache
+        generator.model.cache_k.zero_()
+        generator.model.cache_v.zero_()
+
         batch_attention_scores = generator.extract_attention_metrics(batch_prompts)
+        batch_prompts_tokens = generator.prompt_tokens
         final_attention_scores.extend(batch_attention_scores)
+        prompt_tokens.extend(batch_prompts_tokens)
 
     with open('final_attention_scores.txt', 'w') as f:
-        for promt, context_vector in zip(prompts, final_attention_scores):
-            f.write(f'{promt}\n{context_vector}\n\n')
+        for promt, context_vector in zip(prompts, prompt_tokens, final_attention_scores):
+            f.write(f'{promt}\n{len(prompt_tokens)}\n{prompt_tokens}\n{context_vector}\n\n')
 
 if __name__ == "__main__":
     fire.Fire(main)
