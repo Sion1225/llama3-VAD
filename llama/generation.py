@@ -419,10 +419,10 @@ class Llama:
 
         try:
             # Extract attention metrics
-            if len(self.model.attention_scores) == 0:
+            if len(self.model.attention_scores_list) == 0:
                 raise ValueError("No attention scores were recorded. Ensure that the forward pass is correctly implemented.")
         
-            last_layer_attention_scores = self.model.attention_scores[-1] # (bsz, num_heads, tgt_len, src_len) (bs, n_local_heads, seqlen, cache_len + seqlen)
+            last_layer_attention_scores = self.model.attention_scores_list[-1] # (bsz, num_heads, tgt_len, src_len) (bs, n_local_heads, seqlen, cache_len + seqlen)
         except:
             print("Error: 'attention_scores' is not provided.")
             raise
