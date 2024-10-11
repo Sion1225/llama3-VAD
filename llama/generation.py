@@ -419,14 +419,18 @@ class Llama:
 
         try:
             # Extract attention metrics
-            attention_scores = self.model.attention_scores # (bsz, num_heads, tgt_len, src_len) (bs, n_local_heads, seqlen, cache_len + seqlen)
+            if len(self.model.attention_scores) == 0:
+                raise ValueError("No attention scores were recorded. Ensure that the forward pass is correctly implemented.")
+        
+            last_layer_attention_scores = self.model.attention_scores[-1] # (bsz, num_heads, tgt_len, src_len) (bs, n_local_heads, seqlen, cache_len + seqlen)
         except:
             print("Error: 'attention_scores' is not provided.")
             raise
 
         try:
             # Extract attention scores for the last token
-            final_attention_scores = attention_scores[eos_positions[:, 0], :, eos_positions[:, 1], :]
+            # eos_positions: [num_eos, 2] where each row is [batch_idx, position]
+            final_attention_scores = last_layer_attention_scores[eos_positions[:, 0], :, eos_positions[:, 1], :]
         except:
             print("Error: 'final_attention_scores' is not provided.")
             print(eos_positions)

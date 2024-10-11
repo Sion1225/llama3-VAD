@@ -277,8 +277,6 @@ class Transformer(nn.Module):
         for layer_id in range(params.n_layers):
             self.layers.append(TransformerBlock(layer_id, params))
 
-        self.attention_scores = self.layers[params.n_layers - 1].attention.attention_scores
-
         self.norm = RMSNorm(params.dim, eps=params.norm_eps)
         self.output = ColumnParallelLinear(
             params.dim, params.vocab_size, bias=False, init_method=lambda x: x
@@ -289,6 +287,8 @@ class Transformer(nn.Module):
             params.max_seq_len * 2,
             params.rope_theta,
         )
+
+        self.attention_scores_list = []
 
     @torch.inference_mode()
     def forward(self, tokens: torch.Tensor, start_pos: int):
@@ -311,8 +311,12 @@ class Transformer(nn.Module):
                 [torch.zeros((seqlen, start_pos), device=tokens.device), mask]
             ).type_as(h)
 
+        self.attention_scores_list = []
+
         for layer in self.layers:
             h = layer(h, start_pos, freqs_cis, mask)
+            self.attention_scores_list.append(layer.attention_scores)
+            
         h = self.norm(h)
         output = self.output(h).float()
         return output
