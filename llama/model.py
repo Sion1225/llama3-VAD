@@ -245,6 +245,9 @@ class TransformerBlock(nn.Module):
         self.attention_norm = RMSNorm(args.dim, eps=args.norm_eps)
         self.ffn_norm = RMSNorm(args.dim, eps=args.norm_eps)
 
+        # save attention scores for output
+        self.attention_scores = None
+
     def forward(
         self,
         x: torch.Tensor,
@@ -252,7 +255,9 @@ class TransformerBlock(nn.Module):
         freqs_cis: torch.Tensor,
         mask: Optional[torch.Tensor],
     ):
+        # Need to extract attention scores for output
         h = x + self.attention(self.attention_norm(x), start_pos, freqs_cis, mask)
+        self.attention_scores = self.attention.attention_scores
         out = h + self.feed_forward(self.ffn_norm(h))
         return out
 
@@ -271,6 +276,8 @@ class Transformer(nn.Module):
         self.layers = torch.nn.ModuleList()
         for layer_id in range(params.n_layers):
             self.layers.append(TransformerBlock(layer_id, params))
+
+        self.attention_scores = TransformerBlock.attention_scores
 
         self.norm = RMSNorm(params.dim, eps=params.norm_eps)
         self.output = ColumnParallelLinear(
