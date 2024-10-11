@@ -346,95 +346,54 @@ class Llama:
         max_gen_len: Optional[int] = None,
     ) -> List[torch.Tensor]:
         
-        try:
-            if max_gen_len is None:
-                max_gen_len = self.model.params.max_seq_len - 1
-        except:
-            print("Error: 'max_gen_len' is not provided.")
-            raise
+        if max_gen_len is None:
+            max_gen_len = self.model.params.max_seq_len - 1
 
-        try:
-            prompt_tokens = [self.tokenizer.encode(x, bos=True, eos=True) for x in prompts] # <s> + prompt + </s> # change eos to 'True' from 'False' 
-        except:
-            print("Error: 'prompts' are not provided.")
-            raise
+        prompt_tokens = [self.tokenizer.encode(x, bos=True, eos=True) for x in prompts] # <s> + prompt + </s> # change eos to 'True' from 'False' 
 
-        try:
-            params = self.model.params
-            bsz = len(prompt_tokens)
-            assert bsz <= params.max_batch_size, (bsz, params.max_batch_size)
-        except:
-            print("Error: 'bsz' is not provided.")
-            raise
+        params = self.model.params
+        bsz = len(prompt_tokens)
+        assert bsz <= params.max_batch_size, (bsz, params.max_batch_size)
 
-        try:
-            min_prompt_len = min(len(t) for t in prompt_tokens)
-            max_prompt_len = max(len(t) for t in prompt_tokens)
-            assert max_prompt_len <= params.max_seq_len
-            total_len = min(params.max_seq_len, max_gen_len + max_prompt_len)
-        except:
-            print("Error: 'min_prompt_len' or 'max_prompt_len' or 'total_len' is not provided.")
-            raise
+        min_prompt_len = min(len(t) for t in prompt_tokens)
+        max_prompt_len = max(len(t) for t in prompt_tokens)
+        assert max_prompt_len <= params.max_seq_len
+        total_len = min(params.max_seq_len, max_gen_len + max_prompt_len)
 
-        try:
-            pad_id = self.tokenizer.pad_id
-            tokens = torch.full((bsz, total_len), pad_id, dtype=torch.long, device="cuda")
-            for k, t in enumerate(prompt_tokens):
-                tokens[k, : len(t)] = torch.tensor(t, dtype=torch.long, device="cuda")
-        except:
-            print("Error: 'pad_id' or 'tokens' is not provided.")
-            raise
+        pad_id = self.tokenizer.pad_id
+        tokens = torch.full((bsz, total_len), pad_id, dtype=torch.long, device="cuda")
+        for k, t in enumerate(prompt_tokens):
+            tokens[k, : len(t)] = torch.tensor(t, dtype=torch.long, device="cuda")
 
-        try:
-            prev_pos = 0
-            #eos_reached = torch.tensor([False] * bsz, device="cuda")
+        prev_pos = 0
+        #eos_reached = torch.tensor([False] * bsz, device="cuda")
 
-            # find the position of the first <eos> token
-            # Convert prompt_tokens to a tensor
-            prompt_tensor = torch.tensor(tokens, dtype=torch.long, device="cuda")
-            # Find the position of the first <eos> token
-            eos_positions = (prompt_tensor == self.tokenizer.eos_id).nonzero(as_tuple=False) # [bsz][batch number, <eos> position]\
-        except:
-            print("Error: 'prev_pos' or 'eos_positions' is not provided.")
-            raise
+        # find the position of the first <eos> token
+        # Convert prompt_tokens to a tensor
+        prompt_tensor = torch.tensor(tokens, dtype=torch.long, device="cuda")
+        # Find the position of the first <eos> token
+        eos_positions = (prompt_tensor == self.tokenizer.eos_id).nonzero(as_tuple=False) # [bsz][batch number, <eos> position]\
 
-        try:
-            input_text_mask = tokens != pad_id
+        input_text_mask = tokens != pad_id
 
-            if min_prompt_len == total_len:
-                raise ValueError("Prompt is too long for attention extraction or 'max_gen_len' is too short.")
+        if min_prompt_len == total_len:
+            raise ValueError("Prompt is too long for attention extraction or 'max_gen_len' is too short.")
         
-            stop_tokens = torch.tensor(list(self.tokenizer.stop_tokens))
-        except:
-            print("Error: 'input_text_mask' or 'stop_tokens' is not provided.")
-            raise
+        stop_tokens = torch.tensor(list(self.tokenizer.stop_tokens))
 
-        try:
-            # Input prompt to the model
-            prev_pos = max_prompt_len
-            logits = self.model.forward(tokens[:, :max_prompt_len], 0)
-        except:
-            print("Error: 'prev_pos' or 'logits' is not provided.")
-            raise
+        # Input prompt to the model
+        prev_pos = max_prompt_len
+        logits = self.model.forward(tokens[:, :max_prompt_len], 0)
 
-        try:
-            # Extract attention metrics
-            if len(self.model.attention_scores_list) == 0:
-                raise ValueError("No attention scores were recorded. Ensure that the forward pass is correctly implemented.")
+        # Extract attention metrics
+        if len(self.model.attention_scores_list) == 0:
+            raise ValueError("No attention scores were recorded. Ensure that the forward pass is correctly implemented.")
         
-            last_layer_attention_scores = self.model.attention_scores_list[-1] # (bsz, num_heads, tgt_len, src_len) (bs, n_local_heads, seqlen, cache_len + seqlen)
-        except:
-            print("Error: 'attention_scores' is not provided.")
-            raise
+        last_layer_attention_scores = self.model.attention_scores_list[-1] # (bsz, num_heads, tgt_len, src_len) (bs, n_local_heads, seqlen, cache_len + seqlen)
 
-        try:
-            # Extract attention scores for the last token
-            # eos_positions: [num_eos, 2] where each row is [batch_idx, position]
-            final_attention_scores = last_layer_attention_scores[eos_positions[:, 0], :, eos_positions[:, 1], :]
-        except:
-            print("Error: 'final_attention_scores' is not provided.")
-            print(eos_positions)
-            raise
+        # Extract attention scores for the last token
+        # eos_positions: [num_eos, 2] where each row is [batch_idx, position]
+        final_attention_scores = last_layer_attention_scores[eos_positions[:, 0], :, eos_positions[:, 1], :]
 
         return final_attention_scores
 

@@ -28,9 +28,13 @@ def main(
     emobank = pd.read_csv(EMOBANK_PATH, na_values=[], keep_default_na=False)
 
     prompts: List[str] = emobank['text'].tolist()
-    print(prompts[:3])
+    prompts_len = len(prompts)
 
-    final_attention_scores = generator.extract_attention_metrics(prompts)
+    final_attention_scores = []
+    for i in range(0, prompts_len, max_batch_size):
+        batch_prompts = prompts[i:i+max_batch_size]
+        batch_attention_scores = generator.extract_attention_metrics(batch_prompts)
+        final_attention_scores.extend(batch_attention_scores)
 
     with open('final_attention_scores.txt', 'w') as f:
         for promt, context_vector in zip(prompts, final_attention_scores):
