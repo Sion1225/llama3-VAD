@@ -7,6 +7,12 @@ import pandas as pd
 from llama import Llama
 
 
+def reset_attention_cache(module, input, output):
+    if hasattr(module, "cache_k"):
+        module.cache_k.zero()
+    if hasattr(module, "cache_v"):
+        module.cache_v.zero()
+
 def main(
     ckpt_dir: str,
     tokenizer_path: str,
@@ -30,14 +36,13 @@ def main(
     prompts: List[str] = emobank['text'].tolist()
     prompts_len = len(prompts)
 
+    for layer in generator.model.layers:
+        layer.attention.register_forward_hook(reset_attention_cache)
+
     final_attention_scores = []
     prompt_tokens = []
     for i in range(0, prompts_len, max_batch_size):
         batch_prompts = prompts[i:i+max_batch_size]
-
-        # Reset cache
-        generator.model.cache_k.zero_()
-        generator.model.cache_v.zero_()
 
         batch_attention_scores = generator.extract_attention_metrics(batch_prompts)
         batch_prompts_tokens = generator.prompt_tokens
