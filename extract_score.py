@@ -22,6 +22,8 @@ def main(
 ):
     
     print(f"Working directory: {os.getcwd()}")
+
+    tokenizer = Tokenizer(model_path=tokenizer_path)
     
     generator = Llama.build(
         ckpt_dir=ckpt_dir,
@@ -54,12 +56,12 @@ def main(
             f.write(f'Prompt: {prompt}\n')
             f.write(f'Token Length: {len(tokens)}\n')
             f.write(f'Index of Tokens: {tokens}\n')
-            f.write(f'Tokens: {Tokenizer.decode(tokens)}\n')
+            f.write(f'Tokens: {tokenizer.decode(tokens)}\n')
 
             f_softmax.write(f'Prompt: {prompt}\n')
             f_softmax.write(f'Token Length: {len(tokens)}\n')
             f_softmax.write(f'Index of Tokens: {tokens}\n')
-            f_softmax.write(f'Tokens: {Tokenizer.decode(tokens)}\n')
+            f_softmax.write(f'Tokens: {tokenizer.decode(tokens)}\n')
             
             truncated_scores = scores[:, :len(tokens)]
 
