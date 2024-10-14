@@ -50,7 +50,7 @@ def main(
         prompt_tokens.extend(batch_prompts_tokens)
 
     with open('final_attention_scores.txt', 'w') as f:
-        for promt, context_vector in zip(prompts, prompt_tokens, final_attention_scores):
+        for promt, prompt_tokens, context_vector in zip(prompts, prompt_tokens, final_attention_scores):
             f.write(f'{promt}\n{len(prompt_tokens)}\n{prompt_tokens}\n{context_vector}\n\n')
 
 if __name__ == "__main__":
