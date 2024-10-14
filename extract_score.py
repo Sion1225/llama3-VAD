@@ -9,9 +9,9 @@ from llama import Llama
 
 def reset_attention_cache(module, input, output):
     if hasattr(module, "cache_k"):
-        module.cache_k.zero()
+        module.cache_k.zero_()
     if hasattr(module, "cache_v"):
-        module.cache_v.zero()
+        module.cache_v.zero_()
 
 def main(
     ckpt_dir: str,
