@@ -19,6 +19,8 @@ def main(
     max_seq_len: int = 128,
     max_gen_len: int = 64,
     max_batch_size: int = 4,
+    EMOBANK_PATH: str = "experiment_data/raw_data/emobank.csv",
+    OUTPUT_PATH: str = "experiment_data/output_data",
 ):
     
     print(f"Working directory: {os.getcwd()}")
@@ -32,7 +34,6 @@ def main(
         max_batch_size=max_batch_size,
     )
 
-    EMOBANK_PATH = "experiment_data/emobank.csv"
     emobank = pd.read_csv(EMOBANK_PATH, na_values=[], keep_default_na=False)
 
     prompts: List[str] = emobank['text'].tolist()
@@ -51,7 +52,9 @@ def main(
         final_attention_scores.extend(batch_attention_scores)
         prompt_tokens.extend(batch_prompts_tokens)
 
-    with open('final_attention_scores.txt', 'w') as f, open('softmax_attention_scores.txt', 'w') as f_softmax:
+    with open(os.path.join(OUTPUT_PATH, 'final_attention_scores.txt'), 'w') as f, \
+        open(os.path.join(OUTPUT_PATH, 'softmax_attention_scores.txt'), 'w') as f_softmax, \
+        open(os.path.join(OUTPUT_PATH, 'softmax_attention_scores wo bos & eos.txt'), 'w') as f_softmax_wo_bos_eos:
         for prompt, tokens, scores in zip(prompts, prompt_tokens, final_attention_scores):
             f.write(f'Prompt: {prompt}\n')
             f.write(f'Token Length: {len(tokens)}\n')
@@ -73,6 +76,11 @@ def main(
                 softmax_score_vector = score_vector.softmax(dim=-1)
                 f_softmax.write(f'Head {head} Attention Scores: {softmax_score_vector.tolist()}\n')
             f_softmax.write('\n')
+
+            for head, score_vector in enumerate(truncated_scores):
+                softmax_score_vector = score_vector.softmax(dim=-1)
+                f_softmax_wo_bos_eos.write(f'Head {head} Attention Scores: {softmax_score_vector[1:-1].tolist()}\n')
+            f_softmax_wo_bos_eos.write('\n')
 
 
 if __name__ == "__main__":
