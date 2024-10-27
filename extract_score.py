@@ -56,20 +56,25 @@ def main(
         open(os.path.join(OUTPUT_PATH, 'softmax_attention_scores.txt'), 'w') as f_softmax, \
         open(os.path.join(OUTPUT_PATH, 'softmax_attention_scores wo bos & eos.txt'), 'w') as f_softmax_wo_bos_eos:
         for prompt, tokens, scores in zip(prompts, prompt_tokens, final_attention_scores):
+
+            tokens_list = []
+            for token in tokens:
+                tokens_list.append(str(tokenizer.decode(token)) + '·')
+
             f.write(f'Prompt: {prompt}\n')
             f.write(f'Token Length: {len(tokens)}\n')
             f.write(f'Index of Tokens: {tokens}\n')
-            f.write(f'Tokens: {tokenizer.decode(tokens)}\n')
+            f.write(f'Tokens: {tokens_list}\n')
 
             f_softmax.write(f'Prompt: {prompt}\n')
             f_softmax.write(f'Token Length: {len(tokens)}\n')
             f_softmax.write(f'Index of Tokens: {tokens}\n')
-            f_softmax.write(f'Tokens: {tokenizer.decode(tokens)}\n')
+            f_softmax.write(f'Tokens: {tokens_list}\n')
 
             f_softmax_wo_bos_eos.write(f'Prompt: {prompt}\n')
             f_softmax_wo_bos_eos.write(f'Token Length: {len(tokens)}\n')
             f_softmax_wo_bos_eos.write(f'Index of Tokens: {tokens}\n')
-            f_softmax_wo_bos_eos.write(f'Tokens: {tokenizer.decode(tokens)}\n')
+            f_softmax_wo_bos_eos.write(f'Tokens: {tokens_list}\n')
             
             truncated_scores = scores[:, :len(tokens)]
             for head, score_vector in enumerate(truncated_scores):
