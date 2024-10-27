@@ -59,7 +59,7 @@ def main(
 
             tokens_list = []
             for token in tokens:
-                tokens_list.append(str(tokenizer.decode([token])) + '·')
+                tokens_list.append(str(tokenizer.decode([token])))
 
             f.write(f'Prompt: {prompt}\n')
             f.write(f'Token Length: {len(tokens)}\n')
