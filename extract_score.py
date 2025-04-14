@@ -13,6 +13,10 @@ def reset_attention_cache(module, input, output):
     if hasattr(module, "cache_v"):
         module.cache_v.zero_()
 
+# For Preprocessing
+def remove_soft_hyphen(text):
+    return ''.join(c for c in text if c != '\xad')
+
 def main(
     ckpt_dir: str,
     tokenizer_path: str,
@@ -46,6 +50,7 @@ def main(
     prompt_tokens = []
     for i in range(0, prompts_len, max_batch_size):
         batch_prompts = prompts[i:i+max_batch_size]
+        batch_prompts = [remove_soft_hyphen(prompt) for prompt in batch_prompts]
 
         batch_attention_scores = generator.extract_attention_scores(batch_prompts)
         batch_prompts_tokens = generator.prompt_tokens
