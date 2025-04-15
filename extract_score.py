@@ -1,5 +1,6 @@
 from typing import List
 import os
+import re
 
 import fire
 import pandas as pd
@@ -15,7 +16,9 @@ def reset_attention_cache(module, input, output):
 
 # For Preprocessing
 def remove_soft_hyphen(text):
-    return ''.join(c for c in text if c != '\xad')
+    text = text.replace('\xad', '')
+    text = re.sub(r'[\u00A0\u2000-\u200B\u202F\u2060]', ' ', text)
+    return text
 
 def main(
     ckpt_dir: str,
