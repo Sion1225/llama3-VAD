@@ -41,11 +41,13 @@ def main(
         max_batch_size=max_batch_size,
     )
 
+    # Process the data
     emobank = pd.read_csv(EMOBANK_PATH, na_values=[], keep_default_na=False)
 
     prompts: List[str] = emobank['text'].tolist()
-    prompts_len = len(prompts)
+    prompts_len = len(prompts) 
 
+    # Model
     for layer in generator.model.layers:
         layer.attention.register_forward_hook(reset_attention_cache)
 
