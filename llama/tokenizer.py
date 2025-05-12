@@ -227,3 +227,12 @@ class ChatFormat:
         # Add the start of an assistant message for the model to complete.
         tokens.extend(self.encode_header({"role": "assistant", "content": ""}))
         return tokens
+
+    def encode_full_dialog_with_eos(self, dialog: Dialog) -> List[int]:
+        tokens = []
+        tokens.append(self.tokenizer.special_tokens["<|begin_of_text|>"])
+        for message in dialog:
+            tokens.extend(self.encode_message(message))
+        # Add the end of the dialog.
+        tokens.append(self.tokenizer.special_tokens["<|end_of_text|>"])
+        return tokens

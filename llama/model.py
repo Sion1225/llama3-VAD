@@ -246,7 +246,7 @@ class TransformerBlock(nn.Module):
         self.ffn_norm = RMSNorm(args.dim, eps=args.norm_eps)
 
         # save attention scores for output
-        self.attention_scores = None
+        self.attention_scores = None # Technically, it is logits
 
     def forward(
         self,
@@ -288,7 +288,7 @@ class Transformer(nn.Module):
             params.rope_theta,
         )
 
-        self.attention_scores_list = []
+        self.attention_scores_list = [] # logits
 
     @torch.inference_mode()
     def forward(self, tokens: torch.Tensor, start_pos: int):

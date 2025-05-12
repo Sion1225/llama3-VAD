@@ -117,8 +117,6 @@ class Llama:
         self.tokenizer = tokenizer
         self.formatter = ChatFormat(tokenizer)
 
-        self.prompt_tokens = None
-
     @torch.inference_mode()
     def generate(
         self,
@@ -344,27 +342,25 @@ class Llama:
     @torch.inference_mode()
     def extract_attention_scores(
         self,
-        prompts: List[str],
+        prompt_tokens: List[str],
         max_gen_len: Optional[int] = None,
     ) -> List[torch.Tensor]:
         
         if max_gen_len is None:
             max_gen_len = self.model.params.max_seq_len - 1
 
-        self.prompt_tokens = [self.tokenizer.encode(x, bos=True, eos=True) for x in prompts] # <s> + prompt + </s> # change eos to 'True' from 'False' 
-
         params = self.model.params
-        bsz = len(self.prompt_tokens)
+        bsz = len(prompt_tokens)
         assert bsz <= params.max_batch_size, (bsz, params.max_batch_size)
 
-        min_prompt_len = min(len(t) for t in self.prompt_tokens)
-        max_prompt_len = max(len(t) for t in self.prompt_tokens)
+        min_prompt_len = min(len(t) for t in prompt_tokens)
+        max_prompt_len = max(len(t) for t in prompt_tokens)
         assert max_prompt_len <= params.max_seq_len
         total_len = min(params.max_seq_len, max_gen_len + max_prompt_len)
 
         pad_id = self.tokenizer.pad_id
         tokens = torch.full((bsz, total_len), pad_id, dtype=torch.long, device="cuda")
-        for k, t in enumerate(self.prompt_tokens):
+        for k, t in enumerate(prompt_tokens):
             tokens[k, : len(t)] = torch.tensor(t, dtype=torch.long, device="cuda")
 
         prev_pos = 0
@@ -393,12 +389,67 @@ class Llama:
         
         last_layer_attention_scores = self.model.attention_scores_list[-1] # (bsz, num_heads, tgt_len, src_len) (bs, n_local_heads, seqlen, cache_len + seqlen)
 
-        # Extract attention scores for the last token
+        # Extract attention scores(logits) for the last token
         # eos_positions: [num_eos, 2] where each row is [batch_idx, position]
-        final_attention_scores = last_layer_attention_scores[eos_positions[:, 0], :, eos_positions[:, 1], :]
+        final_attention_logits = last_layer_attention_scores[eos_positions[:, 0], :, eos_positions[:, 1], :]
 
-        return final_attention_scores
+        return final_attention_logits
 
+    def extract_from_text_prompts(
+        self,
+        prompts: List[str],
+        max_gen_len: Optional[int] = None,
+    ) -> List[torch.Tensor]:
+        """
+        Extract attention scores from the model for a list of text prompts.
+
+        Args:
+            prompts (List[str]): List of text prompts for which to extract attention scores.
+            max_gen_len (Optional[int], optional): Maximum length of the generated response sequence.
+                If not provided, it's set to the model's maximum sequence length minus 1.
+
+        Returns:
+            List[torch.Tensor]: List of attention scores for each prompt.
+
+        Note:
+            This method extracts attention scores from the model for the provided text prompts.
+            It returns a list of tensors containing the attention scores for each prompt.
+        """
+        if max_gen_len is None:
+            max_gen_len = self.model.params.max_seq_len - 1
+
+        prompt_tokens = [self.tokenizer.encode(x, bos=True, eos=True) for x in prompts]
+
+        return self.extract_attention_scores(prompt_tokens, max_gen_len)
+    
+    def extract_from_dialog_prompts(
+        self,
+        dialogs: List[Dialog],
+        max_gen_len: Optional[int] = None,
+    ) -> List[torch.Tensor]:
+        """
+        Extract attention scores from the model for a list of dialog prompts.
+
+        Args:
+            dialogs (List[Dialog]): List of dialog prompts for which to extract attention scores.
+            max_gen_len (Optional[int], optional): Maximum length of the generated response sequence.
+                If not provided, it's set to the model's maximum sequence length minus 1.
+
+        Returns:
+            List[torch.Tensor]: List of attention scores for each dialog prompt.
+
+        Note:
+            This method extracts attention scores from the model for the provided dialog prompts.
+            It returns a list of tensors containing the attention scores for each dialog prompt.
+        """
+        if max_gen_len is None:
+            max_gen_len = self.model.params.max_seq_len - 1
+
+        prompt_tokens = [
+            self.formatter.encode_full_dialog_with_eos(dialog) for dialog in dialogs
+        ]
+
+        return self.extract_attention_scores(prompt_tokens, max_gen_len)
 
 
 def sample_top_p(probs, p):
