@@ -399,7 +399,7 @@ class Llama:
         self,
         prompts: List[str],
         max_gen_len: Optional[int] = None,
-    ) -> List[torch.Tensor]:
+    ) -> Tuple[List[torch.Tensor], List[List[int]]]:
         """
         Extract attention scores from the model for a list of text prompts.
 
@@ -410,6 +410,7 @@ class Llama:
 
         Returns:
             List[torch.Tensor]: List of attention scores for each prompt.
+            List[List[int]]: List of tokenized prompts, where each prompt is represented as a list of integers.
 
         Note:
             This method extracts attention scores from the model for the provided text prompts.
@@ -420,13 +421,13 @@ class Llama:
 
         prompt_tokens = [self.tokenizer.encode(x, bos=True, eos=True) for x in prompts]
 
-        return self.extract_attention_scores(prompt_tokens, max_gen_len)
+        return self.extract_attention_scores(prompt_tokens, max_gen_len), prompt_tokens
     
     def extract_from_dialog_prompts(
         self,
         dialogs: List[Dialog],
         max_gen_len: Optional[int] = None,
-    ) -> List[torch.Tensor]:
+    ) -> Tuple[List[torch.Tensor], List[List[int]]]:
         """
         Extract attention scores from the model for a list of dialog prompts.
 
@@ -437,6 +438,8 @@ class Llama:
 
         Returns:
             List[torch.Tensor]: List of attention scores for each dialog prompt.
+            List[List[int]]: List of tokenized prompts, where each prompt is represented as a list of integers.
+
 
         Note:
             This method extracts attention scores from the model for the provided dialog prompts.
@@ -449,7 +452,7 @@ class Llama:
             self.formatter.encode_full_dialog_with_eos(dialog) for dialog in dialogs
         ]
 
-        return self.extract_attention_scores(prompt_tokens, max_gen_len)
+        return self.extract_attention_scores(prompt_tokens, max_gen_len), prompt_tokens
 
 
 def sample_top_p(probs, p):
