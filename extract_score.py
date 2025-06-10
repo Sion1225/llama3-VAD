@@ -122,7 +122,9 @@ def main(
             
             # 파일을 다 읽어오고 난 시점에서도 batch_prompts가 남아있을것이기에 처리를하고 출력까지 해야함.
             if batch_prompts:
-                batch_prompts = [remove_soft_hyphen(prompt) for prompt in batch_prompts]
+                for dialog in batch_prompts:
+                    for utter in dialog:
+                        utter["content"] = remove_soft_hyphen(utter["content"])
 
                 batch_attention_scores, prompt_tokens = generator.extract_from_dialog_prompts(batch_prompts)
 
