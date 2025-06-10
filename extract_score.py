@@ -121,11 +121,12 @@ def main(
                     count = 0
             
             # 파일을 다 읽어오고 난 시점에서도 batch_prompts가 남아있을것이기에 처리를하고 출력까지 해야함.
-            batch_prompts = [remove_soft_hyphen(prompt) for prompt in batch_prompts]
+            if batch_prompts:
+                batch_prompts = [remove_soft_hyphen(prompt) for prompt in batch_prompts]
 
-            batch_attention_scores, prompt_tokens = generator.extract_from_dialog_prompts(batch_prompts)
+                batch_attention_scores, prompt_tokens = generator.extract_from_dialog_prompts(batch_prompts)
 
-            output_attention_scores(output_path, tokenizer_path, batch_prompts, batch_prompts_tokens, batch_attention_scores)
+                output_attention_scores(output_path, tokenizer_path, batch_prompts, batch_prompts_tokens, batch_attention_scores)
     else:
         raise("invalid data string")
  
